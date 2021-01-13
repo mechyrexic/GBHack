@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>D:\Other\Personal\GBHack\GBHack\x64\Release\GBHack.dll</FullPath>
+      <FullPath>D:\Repositories\GitHub\GBHack\src\x64\Release\GBHack.dll</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

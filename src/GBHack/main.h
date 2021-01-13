@@ -1,14 +1,10 @@
+#pragma once
 #include <cstdio>
-#include <Windows.h>
+#include "include/MinHook.h"
+#include "maths.h"
+#include <windows.h>
 
-//globals
-static int** g_pLocalPlayer = nullptr; //has to be a pointer to pointer for some stupid reason (dont deref twice!)
-
-
-//func pointers
-int (*TripPlayer)(int*);
-int (*DisplayText)(int, const char*);
-
+//structure defs
 enum DisplayTextType
 {
     TEXT_BOTTOM = 0,
@@ -21,64 +17,57 @@ enum DisplayTextType
     TEXT_QUITWARNING
 };
 
-void RunHackLoop()
+#pragma pack(1)
+class CGameView
 {
-    while (true)
-    {
-        /*if (GetAsyncKeyState(VK_NUMPAD5) & 1)
-        {
-            //float flHealth = 100.0f;
-            //memcpy((uintptr_t*)g_pLocalPlayer + 0xb860, &flHealth, sizeof(float));
-            printf("%f\n", *(float*)((char*)g_pLocalPlayer + 0xb860));
-        }*/
-        //printf("player pointer: %p\n", (char*)g_pLocalPlayer);
-        //printf("base pointer: %p\n", iBase);
-       // printf("player pointer no deref: %p\n", g_pLocalPlayer);
-        //printf("player pointer one deref: %p\n", *g_pLocalPlayer);
-        //printf("base pointer one deref: %016X\n", *iBase);
-        //printf("player health: %f\n", (float)*(((int*)g_pLocalPlayer) + 0xb860));
-        //printf("player pointer two deref: %X\n", **(int**)g_pLocalPlayer);
-        if (*g_pLocalPlayer)
-        {
-            char* flHealthAddress = ((*(char**)g_pLocalPlayer) + 0xb860);
-            //float flHealth = *(float*)flHealthAddress;
-            //printf("local player health: %f\n", flHealth); //print player health which is 0xb860 bytes offset from the player pointer (have to cast to char** because of C++ type nonsense)
-            float flNewHealth = 1000.0f;
-            memcpy(flHealthAddress , &flNewHealth, sizeof(flNewHealth));
-            if (GetAsyncKeyState(VK_NUMPAD5) & 1)
-            {
-                //float flHealth = 100.0f;
-                //memcpy((uintptr_t*)g_pLocalPlayer + 0xb860, &flHealth, sizeof(float));
-                //TripPlayer(*g_pLocalPlayer);
-                DisplayText(TEXT_BOTTOM2, "shitting and farting");
-                printf("Tripping the player!\n");
-            }
-        }
-        if (GetAsyncKeyState(VK_NUMPAD0) & 1)
-        {
-            break; //uninject the dll
-        }
-    }
-    return;
-}
+public:
+    void* vtable;
+    float position1;
+    float unknown1;
+    float position2;
+    float angle1;
+    float angle2;
+    float empty1;
+    float fov;
+    float empty2[2];
+    float screenwidth;
+    float screenheight;
+    float empty3[10];
+    float unknown2;
+    float empty4[3];
+    float position3;
+    float angle3;
+    float position4;
+};
+#pragma pack()
 
-DWORD WINAPI DLLAttach(HMODULE hModule)
-{
-    char* iBase = (char*)GetModuleHandle(NULL);
-    //char* pPlayerPointer = iBase + 0x14CD998;
-    g_pLocalPlayer = (int**)(iBase + 0x231C898); //a pointer will ALWAYS reside at this address that will always point to the player
-    TripPlayer = (int(*)(int*))(iBase + 0x77B80);
-    DisplayText = (int(*)(int, const char*))(iBase + 0x2492E0);
-    AllocConsole();
-    SetConsoleTitleA("Output");
-    freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
-    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+//globals
+extern int** g_pLocalPlayer; //has to be a pointer to pointer for some stupid reason (dont deref twice!)
+extern Vector** g_pLocalPlayerCollider;
+extern CGameView* g_pGameView;
+extern bool g_bInfiniteHealthEnabled;
+extern bool g_bInfiniteAmmoEnabled;
+extern bool g_bNoclipEnabled;
+extern char* g_cGameBase;
 
-    RunHackLoop();
 
-    fclose((FILE*)stdin);
-    fclose((FILE*)stdout);
-    FreeConsole();
-    FreeLibraryAndExitThread(hModule, 0);
-    return 1;
-}
+//func pointers
+extern int (*TripPlayer)(int*);
+extern int (*DisplayText)(int, const char*);
+extern int (*SetActorPosition)(int*, Vector*, int*);
+extern void (*CopyVectorTramp)(Vector*, Vector*);
+
+
+//func defs
+DWORD WINAPI DLLAttach(HMODULE hModule);
+void SetupHooks();
+void CopyVectorHook(Vector *towrite, Vector *toread);
+void FetchPlayerCollider();
+void HandleToggleButtons();
+void HandleNoclip();
+void ToggleNoclip();
+void ToggleInfiniteHealth();
+void ToggleInfiniteAmmo();
+void RunHackLoop();
+
+
