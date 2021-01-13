@@ -4,7 +4,7 @@
 
 //globals
 int** g_pLocalPlayer = nullptr; //has to be a pointer to pointer for some stupid reason (dont deref twice!)
-Vector** g_pLocalPlayerCollider = nullptr;
+Vector* g_pLocalPlayerCollider = nullptr;
 CGameView* g_pGameView = nullptr;
 bool g_bInfiniteHealthEnabled = false;
 bool g_bInfiniteAmmoEnabled = false;
@@ -26,7 +26,7 @@ void SetupHooks()
     printf("test\n");
 }
 
-void CopyVectorHook(Vector *towrite, Vector *toread)
+void CopyVectorHook(Vector* towrite, Vector* toread)
 {
     CopyVectorTramp(towrite, toread);
 }
@@ -38,12 +38,9 @@ void FetchPlayerCollider()
         g_pLocalPlayerCollider = nullptr;
         return;
     }
-    uintptr_t* pCollider = (uintptr_t*)((*(char**)g_pLocalPlayer) + 0xb658); //god this sucks
-    Vector* pPos = (Vector*)(((char*)pCollider) + 0x90);
-    printf("x: %f\n", pPos->x);
-    printf("y: %f\n", pPos->y);
-    printf("z: %f\n", pPos->z);
-    printf("col: %016X\n", *(uintptr_t*)pCollider);
+    char** pCollider = (char**)((*(char**)g_pLocalPlayer) + 0xb658); //god this sucks
+    Vector* pPos = (Vector*)((*(char**)pCollider) + 0x90);
+    g_pLocalPlayerCollider = pPos;
 }
 
 void HandleToggleButtons()
@@ -64,17 +61,20 @@ void HandleToggleButtons()
 
 void HandleNoclip()
 {
-    Vector* pPlayerPosition = (Vector*)((*(char**)g_pLocalPlayer) + 0x54);
+    //Vector* pPlayerPosition = (Vector*)((*(char**)g_pLocalPlayer) + 0x54);
     //Vector vecorigin;
     //vecorigin.x = 0;
     //vecorigin.y = 0;
     //vecorigin.z = 0;
+    if (!g_pLocalPlayerCollider || !g_pGameView)
+    {
+        return;
+    }
     Vector aimdir = Rad2Vec(g_pGameView->angle1, g_pGameView->angle2);
     VectorNormalize(aimdir);
-    aimdir.x = pPlayerPosition->x + (aimdir.x * 0.01f);
-    aimdir.y = pPlayerPosition->y + (aimdir.y * 0.01f);
-    aimdir.z = pPlayerPosition->z + (aimdir.z * 0.01f);
-    SetActorPosition(*g_pLocalPlayer, &aimdir, nullptr);
+    g_pLocalPlayerCollider->x = g_pLocalPlayerCollider->x + (aimdir.y * 0.0002f);
+    g_pLocalPlayerCollider->y = g_pLocalPlayerCollider->y + (aimdir.z * 0.0003f);
+    g_pLocalPlayerCollider->z = g_pLocalPlayerCollider->z + (aimdir.x * 0.0002f);
 }
 
 void ToggleNoclip()

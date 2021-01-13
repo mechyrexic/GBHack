@@ -43,7 +43,7 @@ public:
 
 //globals
 extern int** g_pLocalPlayer; //has to be a pointer to pointer for some stupid reason (dont deref twice!)
-extern Vector** g_pLocalPlayerCollider;
+extern Vector* g_pLocalPlayerCollider;
 extern CGameView* g_pGameView;
 extern bool g_bInfiniteHealthEnabled;
 extern bool g_bInfiniteAmmoEnabled;
